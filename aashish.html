@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JΛY.EXE — Ultimate Hacker Cinematic 2.0</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    background:#02040a;
+    font-family:'Consolas', monospace;
+    overflow:hidden;
+    position:relative;
+}
+
+/* MATRIX RAIN */
+#matrix{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;background:#02040a}
+
+/* NEBULA OVERLAY */
+#nebula{position:fixed;inset:0;z-index:-1;pointer-events:none;
+background:
+radial-gradient(30% 20% at 10% 20%, rgba(255,120,190,0.06), transparent 10%),
+radial-gradient(35% 25% at 80% 70%, rgba(120,80,255,0.06), transparent 12%),
+radial-gradient(25% 18% at 50% 40%, rgba(255,220,240,0.03), transparent 12%);
+mix-blend-mode:screen;}
+
+/* CENTER BOX */
+#centerBox{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5;}
+#gift{width:160px;height:160px;background:#0ff;border:3px solid #09f;
+box-shadow:0 0 25px #0ff, inset 0 0 20px #09f;border-radius:12px;cursor:pointer;transition:0.3s;}
+#gift:hover{transform:scale(1.06);}
+
+/* EXPLOSION ANIMATION */
+@keyframes popExplode{0%{transform:scale(1);opacity:1;filter:blur(0px)}
+60%{transform:scale(1.4);opacity:0.9;filter:blur(2px)}
+100%{transform:scale(0.1);opacity:0;filter:blur(10px)}}
+.explode{animation:popExplode .6s ease-out forwards;}
+
+/* SHARD SPARKS */
+.shard{position:absolute;width:6px;height:6px;border-radius:50%;
+box-shadow:0 0 12px #0ff;background:#0ff;pointer-events:none;z-index:20;}
+
+/* TERMINAL */
+#terminal{display:none;width:85vw;height:55vh;margin:0 auto;margin-top:30px;
+background:rgba(0,20,40,0.7);border:2px solid #0ff;box-shadow:0 0 35px #0ff;
+padding:18px;color:#0ff;font-size:18px;white-space:pre-line;overflow-y:auto;
+text-shadow:0 0 8px #0ff;z-index:10;position:relative;}
+.cursor{display:inline-block;width:10px;background:#0ff;margin-left:2px;
+animation:blink 0.8s step-end infinite;vertical-align:bottom;}
+@keyframes blink{50%{opacity:0;}}
+
+/* SCANLINES */
+#terminal:after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;
+pointer-events:none;background:linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+background-size:100% 4px;}
+
+/* LOGO */
+#logo{position:fixed;top:15px;left:20px;color:#0ff;font-size:20px;font-weight:bold;
+text-shadow:0 0 12px #0ff,0 0 25px #09f;z-index:15;}
+</style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+<div id="nebula"></div>
+<div id="logo">JΛY.EXE</div>
+
+<div id="centerBox"><div id="gift"></div></div>
+<div id="terminal"><span class="cursor"></span></div>
+
+<audio id="bgm" src="https://files.catbox.moe/3s0l9f.mp3" loop autoplay></audio>
+<audio id="glitch" src="https://files.catbox.moe/0x07ik.mp3"></audio>
+
+<script>
+/* MATRIX RAIN */
+const canvas=document.getElementById("matrix");
+const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+const chars="0101010101";
+const fontSize=18;
+const columns=canvas.width/fontSize;
+const drops=[];
+for(let i=0;i<columns;i++)drops[i]=1;
+function drawMatrix(){
+ctx.fillStyle="rgba(0,0,10,0.08)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle="#0f0";ctx.font=fontSize+"px monospace";
+for(let i=0;i<drops.length;i++){
+const char=chars[Math.floor(Math.random()*chars.length)];
+ctx.fillText(char,i*fontSize,drops[i]*fontSize);
+if(drops[i]*fontSize>canvas.height && Math.random()>0.975)drops[i]=0;
+drops[i]++;
+}}
+setInterval(drawMatrix,33);
+
+/* FLOATING CYBER SYMBOLS */
+const symbols=['#','@','%','λ','$','&','>','<','!'];
+for(let i=0;i<60;i++){
+const el=document.createElement('div');
+el.className='cyberSymbol';
+el.innerText=symbols[Math.floor(Math.random()*symbols.length)];
+el.style.top=Math.random()*window.innerHeight+'px';
+el.style.left=Math.random()*window.innerWidth+'px';
+el.style.fontSize=(10+Math.random()*18)+'px';
+el.style.opacity=0.1+Math.random()*0.3;
+document.body.appendChild(el);
+const speed=0.2+Math.random()*0.4;
+let direction=Math.random()<0.5?-1:1;
+setInterval(()=>{let top=parseFloat(el.style.top);top+=speed*direction;if(top>window.innerHeight)top=0;if(top<0)top=window.innerHeight;el.style.top=top+'px';},30);
+}
+
+/* GIFT EXPLOSION + TERMINAL */
+const gift=document.getElementById("gift");
+const terminal=document.getElementById("terminal");
+const music=document.getElementById("bgm");
+const glitch=document.getElementById("glitch");
+
+gift.addEventListener("click",()=>{
+gift.classList.add("explode");
+glitch.play();
+const rect=gift.getBoundingClientRect();
+const cx=rect.left+rect.width/2;
+const cy=rect.top+rect.height/2;
+spawnShards(cx,cy,40);
+setTimeout(()=>{gift.style.display="none";startTerminal();music.volume=0.4;music.play();},600);
+});
+
+/* SHARD + SPARKS */
+function spawnShards(cx,cy,count){
+for(let i=0;i<count;i++){
+const s=document.createElement('div');s.className='shard';
+const size=Math.random()*6+4;s.style.width=s.style.height=size+'px';
+s.style.left=cx+'px';s.style.top=cy+'px';
+document.body.appendChild(s);
+const angle=Math.random()*2*Math.PI;
+const dist=100+Math.random()*180;
+s.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist}px) scale(0.2)`,opacity:0}],{duration:800+Math.random()*500,easing:'cubic-bezier(.2,.9,.28,1)'}); 
+setTimeout(()=>s.remove(),1500);}
+}
+
+/* TERMINAL TYPEWRITER */
+function typeTerminal(text,speed=35){
+let i=0;
+terminal.style.display="block";
+const cursor=terminal.querySelector(".cursor");
+function type(){
+if(i<text.length){
+if(text.charAt(i)=='\n')terminal.innerHTML+='<br>';
+else terminal.innerHTML+=text.charAt(i);
+i++;terminal.appendChild(cursor);terminal.scrollTop=terminal.scrollHeight;
+setTimeout(type,speed);}
+}
+type();
+}
+
+/* BOOT TEXT + MOTIVATION */
+function startTerminal(){
+const bootText=
+`> Initializing Cyberpunk Engine...
+> Establishing Neural Link...
+> Loading Blue Quantum Particles...
+> Compiling Motivation Module...
+> Optimizing Confidence...
+> Injecting Developer Spirit...
+> Boot Sequence Complete ✔
+
+Jay, yaad rakh…
+Coder ka kaam sirf code likhna nahi hota.
+Coder impossible ko possible banata hai.
+
+Har error tumhe rokne nahi aata…
+woh tumhe upgrade karne aata hai.
+
+Aur Jay…
+TUM woh coder ho jo kabhi rukta nahi —
+SIRF UPGRADE hota rehta hai.`;
+typeTerminal(bootText,35);
+}
+</script>
+
+</body>
+</html>
